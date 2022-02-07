@@ -53,6 +53,8 @@ func initYdb() table.Client {
 		ydb.WithConnectionString("grpcs://ydb.serverless.yandexcloud.net:2135"),
 		yc.WithServiceAccountKeyFileCredentials("./SA-FILE", yc.WithSystemCertPool()),
 		ydb.WithDatabase(database),
+		ydb.WithSessionPoolKeepAliveMinSize(5),
+		ydb.WithSessionPoolIdleThreshold(10*time.Minute),
 	)
 	if err != nil {
 		panic(err)

@@ -26,48 +26,41 @@ func NewRepository(ydb table.Client) *Repository {
 	return &Repository{ydb: ydb}
 }
 
-func (r *Repository) GetUser(userId int64) (model.User, error) {
-
+func (r *Repository) GetUser(userId int64) (u model.User, err error) {
 	ctx := context.Background()
-	session, err := r.ydb.CreateSession(ctx)
-	if err != nil {
-		return model.User{}, err
-	}
+	return u, r.ydb.Do(ctx, func(ctx context.Context, session table.Session) error {
 
-	stmt, err := session.Prepare(ctx, `
+		stmt, err := session.Prepare(ctx, `
 			DECLARE $id AS Int64?;
 			SELECT * FROM users WHERE id = $id`)
-	if err != nil {
-		return model.User{}, err
-	}
+		if err != nil {
+			return err
+		}
 
-	idParam := table.ValueParam("$id", types.OptionalValue(types.Int64Value(userId)))
-	_, res, err := stmt.Execute(ctx, roTX, table.NewQueryParameters(idParam))
-	if err != nil {
-		return model.User{}, err
-	}
+		idParam := table.ValueParam("$id", types.OptionalValue(types.Int64Value(userId)))
+		_, res, err := stmt.Execute(ctx, roTX, table.NewQueryParameters(idParam))
+		if err != nil {
+			return err
+		}
 
-	res.NextResultSet(ctx, "id", "age", "name")
-	res.NextRow()
+		res.NextResultSet(ctx, "id", "age", "name")
+		res.NextRow()
 
-	cs := model.User{}
-	err = res.ScanWithDefaults(&cs.Id, &cs.Age, &cs.Name)
-	if err != nil {
-		return model.User{}, err
-	}
+		err = res.ScanWithDefaults(&u.Id, &u.Age, &u.Name)
+		if err != nil {
+			return err
+		}
 
-	return cs, nil
+		return nil
+	})
 }
 
 func (r *Repository) SaveUser(user model.User) error {
 	ctx := context.Background()
-	session, err := r.ydb.CreateSession(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = session.Close(context.Background()) }()
 
-	const insert = `
+	return r.ydb.Do(ctx, func(ctx context.Context, session table.Session) error {
+
+		const insert = `
 			DECLARE $id		AS Int64?;
 			DECLARE $age	AS Int32?;
 			DECLARE $name	AS Utf8?;
@@ -75,45 +68,42 @@ func (r *Repository) SaveUser(user model.User) error {
 			UPSERT INTO users (id, age, name)
 							VALUES ($id, $age, $name);`
 
-	stmt, err := session.Prepare(ctx, insert)
-	if err != nil {
-		return err
-	}
+		stmt, err := session.Prepare(ctx, insert)
+		if err != nil {
+			return err
+		}
 
-	_, _, err = stmt.Execute(ctx, rwTX, table.NewQueryParameters(
-		table.ValueParam("$id", types.OptionalValue(types.Int64Value(user.Id))),
-		table.ValueParam("$age", types.OptionalValue(types.Int32Value(int32(user.Age)))),
-		table.ValueParam("$name", types.OptionalValue(types.UTF8Value(user.Name))),
-	))
-	if err != nil {
-		return err
-	}
-	return nil
+		_, _, err = stmt.Execute(ctx, rwTX, table.NewQueryParameters(
+			table.ValueParam("$id", types.OptionalValue(types.Int64Value(user.Id))),
+			table.ValueParam("$age", types.OptionalValue(types.Int32Value(int32(user.Age)))),
+			table.ValueParam("$name", types.OptionalValue(types.UTF8Value(user.Name))),
+		))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (r *Repository) DeleteUser(userId int64) error {
 	ctx := context.Background()
-	session, err := r.ydb.CreateSession(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = session.Close(context.Background()) }()
+	return r.ydb.Do(ctx, func(ctx context.Context, session table.Session) error {
 
-	const insert = `
+		const insert = `
 			DECLARE $id		AS Int64?;
-
 			DELETE FROM users WHERE id = $id;`
 
-	stmt, err := session.Prepare(ctx, insert)
-	if err != nil {
-		return err
-	}
+		stmt, err := session.Prepare(ctx, insert)
+		if err != nil {
+			return err
+		}
 
-	_, _, err = stmt.Execute(ctx, rwTX, table.NewQueryParameters(
-		table.ValueParam("$id", types.OptionalValue(types.Int64Value(userId))),
-	))
-	if err != nil {
-		return err
-	}
-	return nil
+		_, _, err = stmt.Execute(ctx, rwTX, table.NewQueryParameters(
+			table.ValueParam("$id", types.OptionalValue(types.Int64Value(userId))),
+		))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
