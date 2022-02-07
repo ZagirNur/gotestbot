@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gotestbot/internal"
-	"gotestbot/internal/view"
-	"io"
+	"gotestbot/internal/bot/bot_handler"
+	"gotestbot/internal/bot/dao"
+	"gotestbot/internal/bot/view"
+	service_dao "gotestbot/internal/service/dao"
 	"net/http"
 	"os"
 )
@@ -13,27 +14,27 @@ import (
 func Handler(rw http.ResponseWriter, req *http.Request) {
 	fmt.Println(req)
 
-	bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_TOKEN"))
+	tgApi, err := tgbotapi.NewBotAPI(os.Getenv("TG_TOKEN"))
 	if err != nil {
 		panic(err)
 	}
 
-	update, err := bot.HandleUpdate(req)
+	update, err := tgApi.HandleUpdate(req)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(update)
 
-	repository := internal.NewRepository(initYdb())
-	viewSender := view.NewView(repository, repository, bot)
+	client := initYdb()
+	rep := dao.NewBotRepository(client)
+	serviceRep := service_dao.NewRepository(client)
+	viewSender := view.NewView(rep, serviceRep, serviceRep, tgApi)
 
-	err = internal.NewBotApp(viewSender, repository).Handle(*update)
+	application := bot_handler.NewBotApp(viewSender, serviceRep, serviceRep, rep)
+	err = application.Handle(*update)
 	if err != nil {
 		panic(err)
 	}
 
-	rw.Header().Set("X-Custom-Header", "Test")
 	rw.WriteHeader(200)
-	name := req.URL.Query().Get("name")
-	io.WriteString(rw, fmt.Sprintf("Hello, %s!", name))
 }
