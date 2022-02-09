@@ -2,19 +2,19 @@ package dao
 
 import (
 	"gotestbot/internal/bot/dao"
-	"gotestbot/internal/bot/sdk"
+	"gotestbot/sdk/tgbot"
 	"sync"
 )
 
 type Cached struct {
 	*dao.BotRepository
 
-	buttons map[string]sdk.Button
-	chats   map[int64]sdk.ChatState
+	buttons map[string]tgbot.Button
+	chats   map[int64]tgbot.ChatInfo
 	m       sync.Mutex
 }
 
-func (c *Cached) GetButton(buttonId string) (sdk.Button, error) {
+func (c *Cached) GetButton(buttonId string) (tgbot.Button, error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 	if b, ok := c.buttons[buttonId]; ok {
@@ -23,14 +23,14 @@ func (c *Cached) GetButton(buttonId string) (sdk.Button, error) {
 	return c.BotRepository.GetButton(buttonId)
 }
 
-func (c *Cached) SaveButton(button sdk.Button) error {
+func (c *Cached) SaveButton(button tgbot.Button) error {
 	c.m.Lock()
 	defer c.m.Unlock()
 	c.buttons[button.Id] = button
 	return nil
 }
 
-func (c *Cached) FlushCache(button sdk.Button) error {
+func (c *Cached) FlushCache(button tgbot.Button) error {
 	c.m.Lock()
 	defer c.m.Unlock()
 	//todo c.BotRepository.SaveAllButtons()

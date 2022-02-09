@@ -6,7 +6,7 @@ import (
 	"github.com/ydb-platform/ydb-go-sdk/v3/table"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
-	"gotestbot/internal/bot/sdk"
+	"gotestbot/sdk/tgbot"
 )
 
 type BotRepository struct {
@@ -20,7 +20,7 @@ func NewBotRepository(ydb table.Client) *BotRepository {
 
 }
 
-func (r *BotRepository) GetChatState(chatId int64) (cs sdk.ChatState, err error) {
+func (r *BotRepository) GetChatState(chatId int64) (cs tgbot.ChatInfo, err error) {
 	ctx := table.WithTransactionSettings(context.Background(), table.TxSettings(table.WithSerializableReadWrite()))
 	return cs, r.ydb.DoTx(ctx, func(ctx context.Context, tx table.TransactionActor) error {
 
@@ -45,7 +45,7 @@ func (r *BotRepository) GetChatState(chatId int64) (cs sdk.ChatState, err error)
 			return err
 		}
 
-		if err := json.Unmarshal(data, &cs.Data); err != nil {
+		if err := json.Unmarshal(data, &cs.ChainData); err != nil {
 			return err
 		}
 
@@ -54,12 +54,12 @@ func (r *BotRepository) GetChatState(chatId int64) (cs sdk.ChatState, err error)
 		table.WithTxSettings(table.TxSettings(table.WithSerializableReadWrite())))
 }
 
-func (r *BotRepository) SaveChatState(state sdk.ChatState) error {
+func (r *BotRepository) SaveChatState(state tgbot.ChatInfo) error {
 	ctx := table.WithTransactionSettings(context.Background(), table.TxSettings(table.WithSerializableReadWrite()))
 
 	return r.ydb.DoTx(ctx, func(ctx context.Context, tx table.TransactionActor) error {
 
-		data, _ := json.Marshal(state.Data)
+		data, _ := json.Marshal(state.ChainData)
 		res, err := tx.Execute(ctx, `
 			DECLARE $chat_id 			AS Int64?;
 			DECLARE $active_chain 		AS Utf8?;
@@ -84,7 +84,7 @@ func (r *BotRepository) SaveChatState(state sdk.ChatState) error {
 
 }
 
-func (r *BotRepository) GetButton(buttonId string) (btn sdk.Button, err error) {
+func (r *BotRepository) GetButton(buttonId string) (btn tgbot.Button, err error) {
 
 	ctx := table.WithTransactionSettings(context.Background(), table.TxSettings(table.WithSerializableReadWrite()))
 
@@ -109,7 +109,7 @@ func (r *BotRepository) GetButton(buttonId string) (btn sdk.Button, err error) {
 			return err
 		}
 
-		btn.Action = sdk.Action(action)
+		btn.Action = tgbot.Action(action)
 		if err := json.Unmarshal(data, &btn.Data); err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func (r *BotRepository) GetButton(buttonId string) (btn sdk.Button, err error) {
 		table.WithTxSettings(table.TxSettings(table.WithSerializableReadWrite())))
 }
 
-func (r *BotRepository) SaveButton(button sdk.Button) error {
+func (r *BotRepository) SaveButton(button tgbot.Button) error {
 	ctx := table.WithTransactionSettings(context.Background(), table.TxSettings(table.WithSerializableReadWrite()))
 	return r.ydb.DoTx(ctx, func(ctx context.Context, tx table.TransactionActor) error {
 

@@ -2,46 +2,41 @@ package main
 
 import (
 	"context"
-	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/rs/zerolog/log"
 	"github.com/ydb-platform/ydb-go-sdk/v3"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
 	yc "github.com/ydb-platform/ydb-go-yc"
 	"gotestbot/internal/bot/bot_handler"
-	"gotestbot/internal/bot/dao"
 	"gotestbot/internal/bot/dao/pg"
 	"gotestbot/internal/bot/view"
 	service_dao "gotestbot/internal/service/dao"
+	"gotestbot/sdk/tgbot"
 	"os"
 	"path"
 	"time"
 )
 
 func main() {
-	api, err := tgbotapi.NewBotAPI(os.Getenv("TG_TOKEN"))
+
+	tgToken := os.Getenv("TG_TOKEN")
+
+	db := initYdb()
+	pgRepository := pg.NewRep()
+
+	bot, err := tgbot.NewBot(tgToken, pgRepository)
 	if err != nil {
-		return
+		log.Fatal().Err(err).Msg("unable to start app")
 	}
 
-	client := initYdb()
-	rep := dao.NewBotRepository(client)
-	serviceRep := service_dao.NewRepository(client)
-	newRep := pg.NewRep()
-	viewSender := view.NewView(newRep, serviceRep, serviceRep, api)
+	serviceRep := service_dao.NewRepository(db)
+	viewSender := view.NewView(pgRepository, serviceRep, bot)
+	application := bot_handler.NewBotApp(viewSender, serviceRep, serviceRep)
 
-	application := bot_handler.NewBotApp(viewSender, serviceRep, serviceRep, rep, newRep)
-
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
-
-	for update := range api.GetUpdatesChan(u) {
-		fmt.Println(update)
-		err = application.Handle(update)
-		if err != nil {
-			panic(err)
-		}
+	err = bot.StartLongPolling(application.Handle)
+	if err != nil {
+		log.Fatal().Err(err).Msg("unable to start app")
 	}
 }
 

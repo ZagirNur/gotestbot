@@ -4,23 +4,20 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"gotestbot/internal/bot/sdk"
+	"gotestbot/sdk/tgbot"
 )
 
-func (v *View) CreateButton(action sdk.Action, data map[string]string) *sdk.Button {
-
+func (v *View) createButton(action tgbot.Action, data map[string]string) *tgbot.Button {
 	id, _ := uuid.NewUUID()
-	button := sdk.Button{
+	button := tgbot.Button{
 		Id:     id.String(),
 		Action: action,
 		Data:   data,
 	}
-	//go func() {
-	err := v.btnProv.SaveButton(button)
+	err := v.chatProv.SaveButton(button)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("")
 	}
-	//}()
 	return &button
 }
 

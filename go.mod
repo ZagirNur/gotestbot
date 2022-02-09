@@ -7,6 +7,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/jmoiron/sqlx v1.3.4
+	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
 	github.com/ydb-platform/ydb-go-sdk/v3 v3.8.8
 	github.com/ydb-platform/ydb-go-yc v0.6.0
