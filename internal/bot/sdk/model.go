@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"encoding/json"
+	"errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/rs/zerolog/log"
 	"strings"
@@ -69,10 +71,25 @@ func (s *ChatState) FinishChain() {
 	s.ActiveChainStep = ""
 }
 
+type Data map[string]string
+
+func (e *Data) Scan(src interface{}) error {
+	switch val := src.(type) {
+	case []uint8:
+		err := json.Unmarshal(val, e)
+		if err != nil {
+			return errors.New("Unable to unmarshall data")
+		}
+	default:
+		return errors.New("Invalid type for ExpireTimestamp")
+	}
+	return nil
+}
+
 type Button struct {
 	Id     string
 	Action Action
-	Data   map[string]string
+	Data   Data
 }
 
 func (b Button) HasAction(action Action) bool {

@@ -1,7 +1,6 @@
 package pg
 
 import (
-	"encoding/json"
 	"fmt"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -34,24 +33,18 @@ func NewRep() *Rep {
 }
 
 func (r Rep) GetButton(btnId string) (btn sdk.Button, err error) {
-	row := r.db.QueryRow("select * from button where id = $1", btnId)
-	var data []byte
-	dataMap := map[string]string{}
-	err = row.Scan(&btn.Id, &btn.Action, &data)
-	if err != nil {
+	row := r.db.QueryRowx("select * from button where id = $1", btnId)
+
+	if err = row.StructScan(&btn); err != nil {
 		return sdk.Button{}, err
 	}
-	json.Unmarshal(data, &dataMap)
-	btn.Data = dataMap
 	return
 }
 
 func (r Rep) SaveButton(button sdk.Button) error {
-	data, _ := json.Marshal(button.Data)
+	insert := "insert into button (id, action, data) values (:id, :action, :data)"
 
-	_, err := r.db.Exec("insert into button (id, action, data) values ($1,$2,$3::json)",
-		button.Id, button.Action, data)
-	if err != nil {
+	if _, err := r.db.NamedExec(insert, button); err != nil {
 		return err
 	}
 	return nil
