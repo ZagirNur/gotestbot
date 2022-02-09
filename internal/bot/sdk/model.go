@@ -179,10 +179,14 @@ func (u *Update) GetButton() Button {
 }
 
 func (u *Update) FlushState() {
-	err := u.stateProv.SaveChatState(*u.GetChatState())
-	if err != nil {
-		log.Error().Err(err).Msgf("cannot save chat state: %+v", u.GetChatState())
-	}
+
+	go func() {
+
+		err := u.stateProv.SaveChatState(*u.GetChatState())
+		if err != nil {
+			log.Error().Err(err).Msgf("cannot save chat state: %+v", u.GetChatState())
+		}
+	}()
 }
 
 func (u *Update) FinishChain() *Update {

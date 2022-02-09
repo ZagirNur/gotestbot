@@ -4,6 +4,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 	"gotestbot/internal/bot/dao"
+	"gotestbot/internal/bot/dao/pg"
 	"gotestbot/internal/bot/sdk"
 	"gotestbot/internal/bot/view"
 	"gotestbot/internal/service/model"
@@ -27,14 +28,15 @@ type BotApp struct {
 	userProv UserProvider
 	prodProv ProductProvider
 	repos    *dao.BotRepository
+	rep      *pg.Rep
 }
 
-func NewBotApp(view *view.View, userProv UserProvider, prodProv ProductProvider, repos *dao.BotRepository) *BotApp {
-	return &BotApp{view: view, userProv: userProv, prodProv: prodProv, repos: repos}
+func NewBotApp(view *view.View, userProv UserProvider, prodProv ProductProvider, repos *dao.BotRepository, rep *pg.Rep) *BotApp {
+	return &BotApp{view: view, userProv: userProv, prodProv: prodProv, repos: repos, rep: rep}
 }
 
 func (b *BotApp) Handle(update tgbotapi.Update) error {
-	u := sdk.NewUpdate(update, b.repos, b.repos)
+	u := sdk.NewUpdate(update, b.repos, b.rep)
 
 	switch {
 	case u.HasCommand("/start") || u.HasAction(view.ActionStart):

@@ -30,7 +30,7 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 	serviceRep := service_dao.NewRepository(client)
 	viewSender := view.NewView(rep, serviceRep, serviceRep, tgApi)
 
-	application := bot_handler.NewBotApp(viewSender, serviceRep, serviceRep, rep)
+	application := bot_handler.NewBotApp(viewSender, serviceRep, serviceRep, rep, nil)
 	err = application.Handle(*update)
 	if err != nil {
 		panic(err)

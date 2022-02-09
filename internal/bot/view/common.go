@@ -15,7 +15,12 @@ func (v *View) CreateButton(action sdk.Action, data map[string]string) *sdk.Butt
 		Action: action,
 		Data:   data,
 	}
-	v.btnProv.SaveButton(button)
+	//go func() {
+	err := v.btnProv.SaveButton(button)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("")
+	}
+	//}()
 	return &button
 }
 

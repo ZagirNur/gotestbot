@@ -4,19 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
 	"gotestbot/internal/bot/sdk"
-)
-
-var (
-	roTX = table.TxControl(
-		table.BeginTx(table.WithOnlineReadOnly()),
-		table.CommitTx(),
-	)
-	rwTX = table.TxControl(
-		table.BeginTx(table.WithSerializableReadWrite()),
-		table.CommitTx(),
-	)
 )
 
 type BotRepository struct {
@@ -31,22 +21,20 @@ func NewBotRepository(ydb table.Client) *BotRepository {
 }
 
 func (r *BotRepository) GetChatState(chatId int64) (cs sdk.ChatState, err error) {
-	ctx := context.Background()
+	ctx := table.WithTransactionSettings(context.Background(), table.TxSettings(table.WithSerializableReadWrite()))
+	return cs, r.ydb.DoTx(ctx, func(ctx context.Context, tx table.TransactionActor) error {
 
-	return cs, r.ydb.Do(ctx, func(ctx context.Context, session table.Session) error {
-
-		stmt, err := session.Prepare(ctx, `
+		res, err := tx.Execute(ctx, `
 			DECLARE $chat_id AS Int64?;
-			SELECT * FROM chat_state WHERE chat_id = $chat_id`)
+			SELECT * FROM chat_state WHERE chat_id = $chat_id`,
+			table.NewQueryParameters(
+				table.ValueParam("$chat_id", types.OptionalValue(types.Int64Value(chatId))),
+			),
+		)
 		if err != nil {
 			return err
 		}
-
-		idParam := table.ValueParam("$chat_id", types.OptionalValue(types.Int64Value(chatId)))
-		_, res, err := stmt.Execute(ctx, roTX, table.NewQueryParameters(idParam))
-		if err != nil {
-			return err
-		}
+		defer res.Close()
 
 		res.NextResultSet(ctx, "chat_id", "active_chain", "active_chain_step", "data")
 		res.NextRow()
@@ -62,62 +50,54 @@ func (r *BotRepository) GetChatState(chatId int64) (cs sdk.ChatState, err error)
 		}
 
 		return nil
-	})
+	},
+		table.WithTxSettings(table.TxSettings(table.WithSerializableReadWrite())))
 }
 
 func (r *BotRepository) SaveChatState(state sdk.ChatState) error {
-	ctx := context.Background()
+	ctx := table.WithTransactionSettings(context.Background(), table.TxSettings(table.WithSerializableReadWrite()))
 
-	return r.ydb.Do(ctx, func(ctx context.Context, session table.Session) error {
+	return r.ydb.DoTx(ctx, func(ctx context.Context, tx table.TransactionActor) error {
 
-		const insert = `
+		data, _ := json.Marshal(state.Data)
+		res, err := tx.Execute(ctx, `
 			DECLARE $chat_id 			AS Int64?;
 			DECLARE $active_chain 		AS Utf8?;
 			DECLARE $active_chain_step 	AS Utf8?;
 			DECLARE $data 				AS Utf8?;
 
 			UPSERT INTO chat_state (chat_id, active_chain, active_chain_step, data)
-							VALUES ($chat_id, $active_chain, $active_chain_step, $data);`
+							VALUES ($chat_id, $active_chain, $active_chain_step, $data);`, table.NewQueryParameters(
 
-		stmt, err := session.Prepare(ctx, insert)
-		if err != nil {
-			return err
-		}
-
-		data, _ := json.Marshal(state.Data)
-		_, _, err = stmt.Execute(ctx, rwTX, table.NewQueryParameters(
 			table.ValueParam("$chat_id", types.OptionalValue(types.Int64Value(state.ChatId))),
 			table.ValueParam("$active_chain", types.OptionalValue(types.UTF8Value(string(state.ActiveChain)))),
 			table.ValueParam("$active_chain_step", types.OptionalValue(types.UTF8Value(state.ActiveChainStep))),
 			table.ValueParam("$data", types.OptionalValue(types.UTF8Value(string(data)))),
 		))
-
 		if err != nil {
 			return err
 		}
+		res.Close()
 		return nil
-	})
+	},
+		table.WithTxSettings(table.TxSettings(table.WithSerializableReadWrite())))
 
 }
 
 func (r *BotRepository) GetButton(buttonId string) (btn sdk.Button, err error) {
 
-	ctx := context.Background()
+	ctx := table.WithTransactionSettings(context.Background(), table.TxSettings(table.WithSerializableReadWrite()))
 
-	return btn, r.ydb.Do(ctx, func(ctx context.Context, session table.Session) error {
-
-		stmt, err := session.Prepare(ctx, `
+	return btn, r.ydb.DoTx(ctx, func(ctx context.Context, tx table.TransactionActor) error {
+		res, err := tx.Execute(ctx, `
 			DECLARE $id AS Utf8?;
-			SELECT * FROM button WHERE id = $id`)
+			SELECT * FROM button WHERE id = $id`, table.NewQueryParameters(
+			table.ValueParam("$id", types.OptionalValue(types.UTF8Value(buttonId))),
+		))
 		if err != nil {
 			return err
 		}
-
-		idParam := table.ValueParam("$id", types.OptionalValue(types.UTF8Value(buttonId)))
-		_, res, err := stmt.Execute(ctx, roTX, table.NewQueryParameters(idParam))
-		if err != nil {
-			return err
-		}
+		defer res.Close()
 
 		res.NextResultSet(ctx, "id", "action", "data")
 		res.NextRow()
@@ -135,38 +115,40 @@ func (r *BotRepository) GetButton(buttonId string) (btn sdk.Button, err error) {
 		}
 
 		return nil
-	})
+	},
+		table.WithTxSettings(table.TxSettings(table.WithSerializableReadWrite())))
 }
 
 func (r *BotRepository) SaveButton(button sdk.Button) error {
-	ctx := context.Background()
-	return r.ydb.Do(ctx, func(ctx context.Context, session table.Session) error {
+	ctx := table.WithTransactionSettings(context.Background(), table.TxSettings(table.WithSerializableReadWrite()))
+	return r.ydb.DoTx(ctx, func(ctx context.Context, tx table.TransactionActor) error {
 
-		const insert = `
+		data, _ := json.Marshal(button.Data)
+
+		res, err := tx.Execute(ctx, `
 			DECLARE $id AS Utf8?;
 			DECLARE $action AS Utf8?;
 			DECLARE $data AS Utf8?;
-			UPSERT INTO button
+			REPLACE INTO button
 				(id, action, data)
 			VALUES
-				($id, $action, $data);`
+				($id, $action, $data);`,
 
-		stmt, err := session.Prepare(ctx, insert)
+			table.NewQueryParameters(
+				table.ValueParam("$id", types.OptionalValue(types.UTF8Value(button.Id))),
+				table.ValueParam("$action", types.OptionalValue(types.UTF8Value(string(button.Action)))),
+				table.ValueParam("$data", types.OptionalValue(types.UTF8Value(string(data)))),
+			),
+			options.WithQueryCachePolicy(options.WithQueryCachePolicyKeepInCache()),
+		)
 		if err != nil {
 			return err
 		}
 
-		data, _ := json.Marshal(button.Data)
-		_, _, err = stmt.Execute(ctx, rwTX, table.NewQueryParameters(
-			table.ValueParam("$id", types.OptionalValue(types.UTF8Value(button.Id))),
-			table.ValueParam("$action", types.OptionalValue(types.UTF8Value(string(button.Action)))),
-			table.ValueParam("$data", types.OptionalValue(types.UTF8Value(string(data)))),
-		))
-
-		if err != nil {
-			return err
-		}
+		res.Close()
 		return nil
 
-	})
+	},
+		table.WithTxSettings(table.TxSettings(table.WithSerializableReadWrite())),
+	)
 }

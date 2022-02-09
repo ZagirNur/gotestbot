@@ -11,6 +11,7 @@ import (
 	yc "github.com/ydb-platform/ydb-go-yc"
 	"gotestbot/internal/bot/bot_handler"
 	"gotestbot/internal/bot/dao"
+	"gotestbot/internal/bot/dao/pg"
 	"gotestbot/internal/bot/view"
 	service_dao "gotestbot/internal/service/dao"
 	"os"
@@ -27,9 +28,10 @@ func main() {
 	client := initYdb()
 	rep := dao.NewBotRepository(client)
 	serviceRep := service_dao.NewRepository(client)
-	viewSender := view.NewView(rep, serviceRep, serviceRep, api)
+	newRep := pg.NewRep()
+	viewSender := view.NewView(newRep, serviceRep, serviceRep, api)
 
-	application := bot_handler.NewBotApp(viewSender, serviceRep, serviceRep, rep)
+	application := bot_handler.NewBotApp(viewSender, serviceRep, serviceRep, rep, newRep)
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
