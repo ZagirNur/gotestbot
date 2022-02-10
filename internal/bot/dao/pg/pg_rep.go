@@ -1,35 +1,17 @@
 package pg
 
 import (
-	"fmt"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"gotestbot/sdk/tgbot"
-	"net/url"
 )
 
 type Rep struct {
 	db *sqlx.DB
 }
 
-func NewRep() *Rep {
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
-		url.QueryEscape("postgres"),
-		url.QueryEscape("postgres"),
-		"localhost",
-		5432,
-		"gotestbot")
-
-	db, err := sqlx.Connect("pgx", dsn)
-	if err != nil {
-		log.Fatal().Err(err).Msgf("Failed to connect to db.")
-	}
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(10)
-	log.Info().Msg("Connected to db")
-
+func NewRep(db *sqlx.DB) *Rep {
 	return &Rep{db: db}
 }
 
