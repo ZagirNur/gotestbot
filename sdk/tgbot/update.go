@@ -14,8 +14,8 @@ type Update struct {
 	btn  *Button
 }
 
-func WrapUpdate(update tgbotapi.Update, stateProv ChatProvider) *Update {
-	return &Update{Update: update, chatProv: stateProv}
+func WrapUpdate(update tgbotapi.Update, chatProvider ChatProvider) *Update {
+	return &Update{Update: update, chatProv: chatProvider}
 }
 
 func (u *Update) GetChatId() int64 {

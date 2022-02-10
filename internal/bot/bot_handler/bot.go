@@ -8,14 +8,8 @@ import (
 	"time"
 )
 
-type UserProvider interface {
-	SaveUser(user model.User) error
-	DeleteUser(userId int64) error
-	GetUser(userId int64) (model.User, error)
-}
-
 type ProductProvider interface {
-	GetProductsByChatId(userId int64) ([]model.Product, error)
+	GetProductsByChatId(chatId int64) ([]model.Product, error)
 	SaveProduct(product model.Product) error
 	DeleteProduct(productId string) error
 }
