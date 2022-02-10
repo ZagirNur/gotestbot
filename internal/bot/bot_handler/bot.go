@@ -15,19 +15,18 @@ type UserProvider interface {
 }
 
 type ProductProvider interface {
-	GetProductsByUserId(userId int64) ([]model.Product, error)
+	GetProductsByChatId(userId int64) ([]model.Product, error)
 	SaveProduct(product model.Product) error
 	DeleteProduct(productId string) error
 }
 
 type BotApp struct {
 	view     *view.View
-	userProv UserProvider
 	prodProv ProductProvider
 }
 
-func NewBotApp(view *view.View, userProv UserProvider, prodProv ProductProvider) *BotApp {
-	return &BotApp{view: view, userProv: userProv, prodProv: prodProv}
+func NewBotApp(view *view.View, prodProv ProductProvider) *BotApp {
+	return &BotApp{view: view, prodProv: prodProv}
 }
 
 func (b *BotApp) Handle(u *tgbot.Update) {
@@ -80,23 +79,23 @@ func (b *BotApp) HandleAddProduct(u *tgbot.Update) {
 
 		err = b.prodProv.SaveProduct(model.Product{
 			Id:             newUuid(),
-			UserId:         u.GetChatId(),
+			ChatId:         u.GetChatId(),
 			Name:           u.GetChainData("productName"),
 			ExpirationDate: date,
 			CreatedAt:      time.Now(),
 		})
-
-		u.FinishChain().FlushChatInfo()
 		if err != nil {
 			panic(err)
 		}
+
+		u.FinishChain().FlushChatInfo()
 
 		_, _ = b.view.ShowProductView("Продукт добавлен \n", u)
 
 	}
 }
 
-func newUuid() string {
+func newUuid() uuid.UUID {
 	newUUID, _ := uuid.NewUUID()
-	return newUUID.String()
+	return newUUID
 }

@@ -7,15 +7,15 @@ import (
 	"gotestbot/sdk/tgbot"
 )
 
-type Rep struct {
+type Repository struct {
 	db *sqlx.DB
 }
 
-func NewRep(db *sqlx.DB) *Rep {
-	return &Rep{db: db}
+func NewRepository(db *sqlx.DB) *Repository {
+	return &Repository{db: db}
 }
 
-func (r *Rep) GetChat(chatId int64) (chat tgbot.ChatInfo, err error) {
+func (r *Repository) GetChat(chatId int64) (chat tgbot.ChatInfo, err error) {
 	row := r.db.QueryRowx("select * from chat_info where chat_id = $1", chatId)
 
 	if err = row.StructScan(&chat); err != nil {
@@ -24,7 +24,7 @@ func (r *Rep) GetChat(chatId int64) (chat tgbot.ChatInfo, err error) {
 	return
 }
 
-func (r *Rep) SaveChatInfo(chat tgbot.ChatInfo) error {
+func (r *Repository) SaveChatInfo(chat tgbot.ChatInfo) error {
 
 	insert := `insert into chat_info (chat_id, active_chain, active_chain_step, chain_data)
 								values (:chat_id, :active_chain, :active_chain_step, :chain_data)
@@ -38,7 +38,7 @@ func (r *Rep) SaveChatInfo(chat tgbot.ChatInfo) error {
 	return nil
 }
 
-func (r *Rep) GetButton(btnId string) (btn tgbot.Button, err error) {
+func (r *Repository) GetButton(btnId string) (btn tgbot.Button, err error) {
 	row := r.db.QueryRowx("select * from button where id = $1", btnId)
 
 	if err = row.StructScan(&btn); err != nil {
@@ -47,7 +47,7 @@ func (r *Rep) GetButton(btnId string) (btn tgbot.Button, err error) {
 	return
 }
 
-func (r *Rep) SaveButton(button tgbot.Button) error {
+func (r *Repository) SaveButton(button tgbot.Button) error {
 	insert := "insert into button (id, action, data) values (:id, :action, :data)"
 
 	if _, err := r.db.NamedExec(insert, button); err != nil {

@@ -7,12 +7,8 @@ import (
 	tgbot2 "gotestbot/sdk/tgbot"
 )
 
-type UserProvider interface {
-	GetUser(int64) (model.User, error)
-}
-
 type ProductProvider interface {
-	GetProductsByUserId(userId int64) ([]model.Product, error)
+	GetProductsByChatId(chatId int64) ([]model.Product, error)
 }
 
 type View struct {
@@ -42,7 +38,7 @@ func (v *View) StartView(u *tgbot2.Update) (tgbotapi.Message, error) {
 }
 
 func (v *View) ShowProductView(prefix string, u *tgbot2.Update) (tgbotapi.Message, error) {
-	products, err := v.prodProv.GetProductsByUserId(u.GetChatId())
+	products, err := v.prodProv.GetProductsByChatId(u.GetChatId())
 	if err != nil {
 		log.Error().Err(err).Msgf("unable to get products for userId: %d", u.GetChatId())
 	}
@@ -53,8 +49,8 @@ func (v *View) ShowProductView(prefix string, u *tgbot2.Update) (tgbotapi.Messag
 		Text(prefix + "Продукты в холодильнике")
 
 	for _, product := range products {
-		prodBtn := v.createButton("PRODUCT", map[string]string{"productId": product.Id})
-		delBtn := v.createButton(ActionDeleteProduct, map[string]string{"productId": product.Id})
+		prodBtn := v.createButton("PRODUCT", map[string]string{"productId": product.Id.String()})
+		delBtn := v.createButton(ActionDeleteProduct, map[string]string{"productId": product.Id.String()})
 
 		builder.AddKeyboardRow().
 			AddButton(product.Name, prodBtn.Id).

@@ -14,10 +14,9 @@ import (
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
 	yc "github.com/ydb-platform/ydb-go-yc"
 	"gotestbot/internal/bot/bot_handler"
-	"gotestbot/internal/bot/dao/pg"
 	"gotestbot/internal/bot/view"
 	"gotestbot/internal/config"
-	service_dao "gotestbot/internal/service/dao"
+	"gotestbot/internal/dao/pg"
 	"gotestbot/sdk/tgbot"
 	"os"
 	"os/signal"
@@ -39,17 +38,15 @@ func main() {
 	InitLogger()
 
 	pgDb := PgConnInit()
-	db := initYdb()
-	pgRepository := pg.NewRep(pgDb)
+	pgRepository := pg.NewRepository(pgDb)
 
 	bot, err := tgbot.NewBot(config.Conf.TgToken, pgRepository)
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to start app")
 	}
 
-	serviceRep := service_dao.NewRepository(db)
-	viewSender := view.NewView(pgRepository, serviceRep, bot)
-	application := bot_handler.NewBotApp(viewSender, serviceRep, serviceRep)
+	viewSender := view.NewView(pgRepository, pgRepository, bot)
+	application := bot_handler.NewBotApp(viewSender, pgRepository)
 
 	go func() {
 		err = bot.StartLongPolling(application.Handle)

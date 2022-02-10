@@ -1,17 +1,14 @@
 package model
 
-import "time"
-
-type User struct {
-	Id   int64
-	Name string
-	Age  int
-}
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Product struct {
-	UserId         int64
-	Id             string
-	Name           string
-	ExpirationDate time.Time
-	CreatedAt      time.Time
+	ChatId         int64     `db:"chat_id"`
+	Id             uuid.UUID `db:"id"`
+	Name           string    `db:"name"`
+	ExpirationDate time.Time `db:"expiration_date"`
+	CreatedAt      time.Time `db:"created_at"`
 }
