@@ -4,8 +4,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gotestbot/internal/bot/bot_handler"
 	"gotestbot/internal/bot/view"
-	"gotestbot/internal/config"
-	"gotestbot/internal/dao/pg"
+	"gotestbot/internal/dao"
 	"gotestbot/sdk/tgbot"
 	"net/http"
 	"os"
@@ -13,9 +12,9 @@ import (
 
 func Handler(rw http.ResponseWriter, req *http.Request) {
 
-	config.InitConfig()
+	InitConfig()
 
-	if config.Conf.Dry {
+	if conf.Dry {
 		log.Info().Msg("Started in dry mode ok\nBye!")
 		os.Exit(0)
 	}
@@ -23,9 +22,9 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 	InitLogger()
 
 	pgDb := PgConnInit()
-	pgRepository := pg.NewRepository(pgDb)
+	pgRepository := dao.NewRepository(pgDb)
 
-	bot, err := tgbot.NewBot(config.Conf.TgToken, pgRepository)
+	bot, err := tgbot.NewBot(conf.TgToken, pgRepository)
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to start app")
 	}

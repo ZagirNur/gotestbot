@@ -45,7 +45,6 @@ func (b *BotApp) Handle(u *tgbot.Update) {
 		_, _ = b.view.ShowProductView("", u)
 	}
 
-	return
 }
 
 func (b *BotApp) HandleAddProduct(u *tgbot.Update) {
@@ -63,8 +62,8 @@ func (b *BotApp) HandleAddProduct(u *tgbot.Update) {
 	case "NAME":
 		u.StartChainStep("DATE").AddChainData("productName", u.GetText()).FlushChatInfo()
 		_, _ = b.view.AddProductDate("", u)
-	case "DATE":
 
+	case "DATE":
 		date, err := time.Parse("02.01.2006", u.GetText())
 		if err != nil {
 			_, _ = b.view.AddProductDate("Неверный формат даты", u)

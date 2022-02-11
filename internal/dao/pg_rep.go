@@ -1,4 +1,4 @@
-package pg
+package dao
 
 import (
 	_ "github.com/jackc/pgx/v4/stdlib"

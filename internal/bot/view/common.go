@@ -23,7 +23,7 @@ func (v *View) createButton(action tgbot.Action, data map[string]string) *tgbot.
 
 func logIfError(send tgbotapi.Message, err error) (tgbotapi.Message, error) {
 	if err != nil {
-		log.Error().Err(err).Msgf("cannot send")
+		log.Error().Err(err).Msg("cannot send")
 	}
 	return send, err
 }

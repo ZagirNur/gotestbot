@@ -9,8 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gotestbot/internal/bot/bot_handler"
 	"gotestbot/internal/bot/view"
-	"gotestbot/internal/config"
-	"gotestbot/internal/dao/pg"
+	"gotestbot/internal/dao"
 	"gotestbot/sdk/tgbot"
 	"os"
 	"os/signal"
@@ -20,9 +19,9 @@ import (
 
 func main() {
 
-	config.InitConfig()
+	InitConfig()
 
-	if config.Conf.Dry {
+	if conf.Dry {
 		log.Info().Msg("Started in dry mode ok\nBye!")
 		os.Exit(0)
 	}
@@ -30,9 +29,9 @@ func main() {
 	InitLogger()
 
 	pgDb := PgConnInit()
-	pgRepository := pg.NewRepository(pgDb)
+	pgRepository := dao.NewRepository(pgDb)
 
-	bot, err := tgbot.NewBot(config.Conf.TgToken, pgRepository)
+	bot, err := tgbot.NewBot(conf.TgToken, pgRepository)
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to start app")
 	}
@@ -54,7 +53,7 @@ func main() {
 
 func PgConnInit() *sqlx.DB {
 
-	dsn := config.GetPgDsn()
+	dsn := GetPgDsn()
 
 	if err := MigrateDB(dsn); err != nil {
 		log.Fatal().Msgf("Database migration failed: %s", err.Error())
@@ -63,12 +62,12 @@ func PgConnInit() *sqlx.DB {
 
 	db, err := sqlx.Connect("pgx", dsn)
 	if err != nil {
-		log.Fatal().Msgf("Failed to connect to db. dsn='%s': %s", config.DsnMaskPass(dsn), err.Error())
+		log.Fatal().Msgf("Failed to connect to db. dsn='%s': %s", DsnMaskPass(dsn), err.Error())
 	}
-	db.SetMaxOpenConns(config.Conf.PgMaxOpenConn)
-	db.SetMaxIdleConns(config.Conf.PgMaxIdleConn)
-	db.SetConnMaxLifetime(config.Conf.PgMaxLifeTime)
-	db.SetConnMaxIdleTime(config.Conf.PgMaxIdleTime)
+	db.SetMaxOpenConns(conf.Pg.MaxOpenConn)
+	db.SetMaxIdleConns(conf.Pg.MaxIdleConn)
+	db.SetConnMaxLifetime(conf.Pg.MaxLifeTime)
+	db.SetConnMaxIdleTime(conf.Pg.MaxIdleTime)
 	log.Info().Msg("Connected to db")
 	return db
 }
@@ -90,20 +89,20 @@ func InitLogger() {
 	zerolog.TimeFieldFormat = "2006-01-02T15:04:05.000Z"
 	zerolog.TimestampFieldName = "@timestamp"
 
-	logLvl, err := zerolog.ParseLevel(strings.ToLower(config.Conf.LogLevel))
+	logLvl, err := zerolog.ParseLevel(strings.ToLower(conf.LogLevel))
 	if err != nil {
-		log.Fatal().Msgf("Failed to parse log level '%s': %s", config.Conf.LogLevel, err.Error())
+		log.Fatal().Msgf("Failed to parse log level '%s': %s", conf.LogLevel, err.Error())
 	}
 
 	zerolog.SetGlobalLevel(logLvl)
 
-	switch config.Conf.LogFormat {
+	switch conf.LogFormat {
 	case "plain":
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 	case "logstash":
 		// do nothing
 	default:
-		log.Fatal().Msgf("Unknown log format '%s'", config.Conf.LogFormat)
+		log.Fatal().Msgf("Unknown log format '%s'", conf.LogFormat)
 	}
 
 	log.Info().Msg("Logger successfully initialized")
