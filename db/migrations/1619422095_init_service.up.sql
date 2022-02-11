@@ -13,3 +13,10 @@ create table chat_info
     chain_data        JSONB   NOT NULL
 );
 
+create table profile
+(
+    user_id      BIGINT PRIMARY KEY,
+    user_name    VARCHAR NOT NULL,
+    display_name VARCHAR NOT NULL
+);
+

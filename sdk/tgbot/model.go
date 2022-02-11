@@ -52,3 +52,9 @@ type ChatInfo struct {
 	ActiveChainStep string `db:"active_chain_step"`
 	ChainData       Data   `db:"chain_data"`
 }
+
+type User struct {
+	UserId      int64  `db:"user_id"`
+	DisplayName string `db:"display_name"`
+	UserName    string `db:"user_name"`
+}

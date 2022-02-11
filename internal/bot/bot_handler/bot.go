@@ -24,7 +24,6 @@ func NewBotApp(view *view.View, prodProv ProductProvider) *BotApp {
 }
 
 func (b *BotApp) Handle(u *tgbot.Update) {
-
 	switch {
 	case u.HasCommand("/start") || u.HasAction(view.ActionStart):
 		u.FinishChain().FlushChatInfo()

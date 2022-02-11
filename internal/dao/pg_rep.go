@@ -55,3 +55,14 @@ func (r *Repository) SaveButton(button tgbot.Button) error {
 	}
 	return nil
 }
+
+func (r *Repository) SaveUser(user tgbot.User) error {
+	insert := `insert into profile (user_id, user_name, display_name) values (:user_id, :user_name, :display_name)
+					on conflict (user_id) do update set user_name      = :user_name,
+											       display_name = :display_name`
+
+	if _, err := r.db.NamedExec(insert, user); err != nil {
+		return err
+	}
+	return nil
+}
