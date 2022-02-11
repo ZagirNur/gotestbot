@@ -12,10 +12,11 @@ type Update struct {
 
 	chat *ChatInfo
 	btn  *Button
+	usr  User
 }
 
-func WrapUpdate(update tgbotapi.Update, chatProvider ChatProvider) *Update {
-	return &Update{Update: update, chatProv: chatProvider}
+func WrapUpdate(update tgbotapi.Update, user User, chatProvider ChatProvider) *Update {
+	return &Update{Update: update, usr: user, chatProv: chatProvider}
 }
 
 func (u *Update) GetChatId() int64 {
