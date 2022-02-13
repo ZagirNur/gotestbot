@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gotestbot/internal/dao"
 )
@@ -12,10 +11,6 @@ type ProdService struct {
 
 func NewProdService(repository *dao.Repository) *ProdService {
 	return &ProdService{Repository: repository}
-}
-
-func (s ProdService) MoveToFridge(chatId int64, fridgeId uuid.UUID) {
-
 }
 
 func (s ProdService) CreateFridgeIfNotExists(chatId int64) error {
