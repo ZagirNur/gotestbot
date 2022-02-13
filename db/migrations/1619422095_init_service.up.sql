@@ -5,7 +5,7 @@ CREATE TABLE button
     data   JSONB   NOT NULL
 );
 
-create table chat_info
+CREATE TABLE chat_info
 (
     chat_id           BIGINT PRIMARY KEY,
     active_chain      VARCHAR NOT NULL,
@@ -13,7 +13,7 @@ create table chat_info
     chain_data        JSONB   NOT NULL
 );
 
-create table profile
+CREATE TABLE profile
 (
     user_id      BIGINT PRIMARY KEY,
     user_name    VARCHAR NOT NULL,

@@ -7,8 +7,8 @@ import (
 )
 
 func (r *Repository) SaveProduct(product model.Product) error {
-	insert := `insert into product (id, fridge_id, name, expiration_date, created_at) 
-		values (:id, (select fridge_id from chat_fridge where chat_id = :chat_id), :name, :expiration_date, :created_at)`
+	insert := `INSERT INTO product (id, fridge_id, name, expiration_date, created_at) 
+		VALUES (:id, (SELECT fridge_id FROM chat_fridge WHERE chat_id = :chat_id), :name, :expiration_date, :created_at)`
 
 	if _, err := r.db.NamedExec(insert, product); err != nil {
 		return err
@@ -17,7 +17,7 @@ func (r *Repository) SaveProduct(product model.Product) error {
 }
 
 func (r *Repository) DeleteProduct(productId string) error {
-	_, err := r.db.Exec(`delete from product where id=$1`, productId)
+	_, err := r.db.Exec(`DELETE FROM product WHERE id=$1`, productId)
 	if err != nil {
 		return errors.Wrapf(err, "unable to delte product, productId: %s", productId)
 	}
@@ -25,10 +25,10 @@ func (r *Repository) DeleteProduct(productId string) error {
 }
 
 func (r *Repository) GetProductsByChatId(chatId int64) (products []model.Product, err error) {
-	rows, err := r.db.Queryx(`select product.* from product 
-    							join fridge f on f.id = product.fridge_id 
-    							join chat_fridge cf on f.id = cf.fridge_id 
-								where chat_id = $1`, chatId)
+	rows, err := r.db.Queryx(`SELECT product.* FROM product 
+    							JOIN fridge f ON f.id = product.fridge_id 
+    							JOIN chat_fridge cf ON f.id = cf.fridge_id 
+								WHERE chat_id = $1`, chatId)
 	defer rows.Close()
 
 	for rows.Next() {
@@ -45,7 +45,7 @@ func (r *Repository) GetProductsByChatId(chatId int64) (products []model.Product
 }
 
 func (r *Repository) ExistsFridgeByChatId(chatId int64) (exists bool, err error) {
-	row := r.db.QueryRow("select exists(select 1 from chat_fridge where chat_id = $1)", chatId)
+	row := r.db.QueryRow("SELECT exists(SELECT 1 FROM chat_fridge WHERE chat_id = $1)", chatId)
 	err = row.Scan(&exists)
 	if err != nil {
 		return false, err
@@ -56,7 +56,7 @@ func (r *Repository) ExistsFridgeByChatId(chatId int64) (exists bool, err error)
 func (r *Repository) CreateFridge() (id uuid.UUID, err error) {
 	id = uuid.New()
 
-	_, err = r.db.Exec("insert into fridge (id) values ($1)", id.String())
+	_, err = r.db.Exec("INSERT INTO fridge (id) VALUES ($1)", id.String())
 	if err != nil {
 		return uuid.UUID{}, nil
 	}
@@ -73,8 +73,8 @@ func (r *Repository) GetFridgeByChatId(chatId int64) (id uuid.UUID, err error) {
 }
 
 func (r *Repository) AddFridgeToChat(chatId int64, fridgeId uuid.UUID) error {
-	_, err := r.db.Exec(`insert into chat_fridge (chat_id, fridge_id) VALUES ($1, $2)
-						on conflict (chat_id) do update set fridge_id = $2;`, chatId, fridgeId.String())
+	_, err := r.db.Exec(`INSERT INTO chat_fridge (chat_id, fridge_id) VALUES ($1, $2)
+						ON CONFLICT (chat_id) DO UPDATE SET fridge_id = $2;`, chatId, fridgeId.String())
 	if err != nil {
 		return err
 	}
