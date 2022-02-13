@@ -171,9 +171,8 @@ func (b *inlineMessageBuilder) Build() tgbotapi.Chattable {
 
 	return tgbotapi.InlineConfig{
 		InlineQueryID: b.inlineQueryId,
-
-		IsPersonal: true,
-		Results:    articles,
+		IsPersonal:    true,
+		Results:       articles,
 	}
 
 }

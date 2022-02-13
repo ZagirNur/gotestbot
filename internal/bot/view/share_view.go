@@ -1,6 +1,7 @@
 package view
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 	tgbot2 "gotestbot/sdk/tgbot"
@@ -34,12 +35,13 @@ func (v *View) ShareInline(u *tgbot2.Update) (tgbotapi.Message, error) {
 }
 
 func (v *View) GoToBotScreen(u *tgbot2.Update) (tgbotapi.Message, error) {
+	botUrl := fmt.Sprintf("http:s//t.me/%s?start", v.tg.BotSelf.UserName)
 
 	msg := new(tgbot2.MessageBuilder).
 		ChatId(u.GetChatId()).InlineId(u.GetInlineId()).
 		Edit(u.IsButton()).
 		Text("перейдите в чат с ботом").
-		AddKeyboardRow().AddButtonUrl("К боту", "http://t.me/"+v.tg.BotSelf.UserName+"?start").
+		AddKeyboardRow().AddButtonUrl("К боту", botUrl).
 		Build()
 
 	return logIfError(v.tg.Send(msg))

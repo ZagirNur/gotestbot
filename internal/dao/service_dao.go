@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gotestbot/internal/service/model"
-	"log"
 )
 
 func (r *Repository) SaveProduct(product model.Product) error {
@@ -38,10 +37,8 @@ func (r *Repository) GetProductsByChatId(chatId int64) (products []model.Product
 			return []model.Product{}, errors.Wrapf(err, "unable to get products, chatId: %d", chatId)
 		}
 		p.ChatId = chatId
-		s := p.Id.String()
-		log.Println(s)
-		products = append(products, p)
 
+		products = append(products, p)
 	}
 
 	return products, nil
