@@ -8,7 +8,7 @@ import (
 )
 
 func (v *View) createButton(action tgbot.Action, data map[string]string) *tgbot.Button {
-	id, _ := uuid.NewUUID()
+	id := uuid.New()
 	button := tgbot.Button{
 		Id:     id.String(),
 		Action: action,
@@ -16,7 +16,7 @@ func (v *View) createButton(action tgbot.Action, data map[string]string) *tgbot.
 	}
 	err := v.chatProv.SaveButton(button)
 	if err != nil {
-		log.Fatal().Err(err).Msgf("")
+		log.Error().Err(err).Msgf("cannot save button")
 	}
 	return &button
 }

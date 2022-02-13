@@ -21,21 +21,31 @@ func WrapUpdate(update tgbotapi.Update, user User, chatProvider ChatProvider) *U
 
 func (u *Update) GetChatId() int64 {
 	if u.Message != nil && u.Message.Chat != nil {
-		return u.Message.Chat.ID
+		return u.Message.From.ID
 	}
 	if u.CallbackQuery != nil {
 		return u.CallbackQuery.From.ID
+	}
+	if u.InlineQuery != nil {
+		return u.InlineQuery.From.ID
 	}
 	return 0
 }
 
 func (u *Update) GetMessageId() int {
-	if u.IsButton() {
+	if u.IsButton() && u.CallbackQuery != nil {
 		return u.CallbackQuery.Message.MessageID
 	} else if u.Message != nil {
 		return u.Message.MessageID
 	}
 	return 0
+}
+
+func (u *Update) GetInlineMessageId() string {
+	if u.InlineQuery != nil {
+		return u.InlineQuery.ID
+	}
+	return ""
 }
 
 func (u *Update) HasText(text string) bool {
@@ -58,7 +68,27 @@ func (u *Update) IsPlainText() bool {
 }
 
 func (u *Update) GetText() string {
+	if u.Message == nil {
+		return ""
+	}
 	return u.Message.Text
+}
+
+func (u *Update) GetInline() string {
+	if u.InlineQuery != nil {
+		return u.InlineQuery.Query
+	}
+	return ""
+}
+
+func (u *Update) GetInlineId() string {
+	if u.CallbackQuery != nil {
+		return u.CallbackQuery.InlineMessageID
+	}
+	if u.InlineQuery != nil {
+		return u.InlineQuery.ID
+	}
+	return ""
 }
 
 func (u *Update) IsButton() bool {
@@ -80,12 +110,12 @@ func (u *Update) HasAction(action Action) bool {
 	return u.IsButton() && u.GetButton().HasAction(action)
 }
 
+// ChatInfo
+
 func (u *Update) HasActionOrChain(actionOrChain Action) bool {
 	return u.IsButton() && u.GetButton().HasAction(actionOrChain) ||
 		u.GetChatInfo().ActiveChain == string(actionOrChain)
 }
-
-// ChatInfo
 
 func (u *Update) GetChatInfo() *ChatInfo {
 	if u.chat == nil {
