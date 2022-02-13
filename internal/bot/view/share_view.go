@@ -35,7 +35,7 @@ func (v *View) ShareInline(u *tgbot2.Update) (tgbotapi.Message, error) {
 }
 
 func (v *View) GoToBotScreen(u *tgbot2.Update) (tgbotapi.Message, error) {
-	botUrl := fmt.Sprintf("http:s//t.me/%s?start", v.tg.BotSelf.UserName)
+	botUrl := fmt.Sprintf("https://t.me/%s?start", v.tg.BotSelf.UserName)
 
 	msg := new(tgbot2.MessageBuilder).
 		ChatId(u.GetChatId()).InlineId(u.GetInlineId()).

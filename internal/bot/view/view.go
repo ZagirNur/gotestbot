@@ -67,31 +67,11 @@ func (v *View) ShowProductView(prefix string, u *tgbot2.Update) (tgbotapi.Messag
 	return logIfError(v.tg.Send(builder.Build()))
 }
 
-func (v *View) AddProductName(u *tgbot2.Update) (tgbotapi.Message, error) {
-
-	builder := new(tgbot2.MessageBuilder).
-		NewMessage(u.GetChatId()).
-		Text("Введите название продукта")
-
-	return logIfError(v.tg.Send(builder.Build()))
-}
-
-func (v *View) AddProductDate(prefix string, u *tgbot2.Update) (tgbotapi.Message, error) {
-	builder := new(tgbot2.MessageBuilder).
-		NewMessage(u.GetChatId()).
-		Text(prefix + "Введите срок годности в виде дд.мм.гггг, например 19.02.2022")
-
-	return logIfError(v.tg.Send(builder.Build()))
-}
-
 func (v *View) ErrorMessage(u *tgbot2.Update, text string) (tgbotapi.Message, error) {
 	c := &tgbotapi.CallbackConfig{
 		CallbackQueryID: u.CallbackQuery.ID,
 		Text:            text,
 		ShowAlert:       true,
-		URL:             "",
-		CacheTime:       1,
 	}
 	return logIfError(v.tg.Send(c))
-
 }
