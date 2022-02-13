@@ -5,6 +5,7 @@ import (
 	"gotestbot/internal/bot/bot_handler"
 	"gotestbot/internal/bot/view"
 	"gotestbot/internal/dao"
+	"gotestbot/internal/service"
 	"gotestbot/sdk/tgbot"
 	"net/http"
 	"os"
@@ -30,7 +31,7 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	viewSender := view.NewView(pgRepository, pgRepository, bot)
-	application := bot_handler.NewBotApp(viewSender, pgRepository)
+	application := bot_handler.NewBotApp(viewSender, service.NewProdService(pgRepository))
 	update, err := bot.WrapRequest(req)
 	if err != nil {
 		log.Error().Err(err).Msg("unable read request")

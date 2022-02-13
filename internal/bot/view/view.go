@@ -83,3 +83,15 @@ func (v *View) AddProductDate(prefix string, u *tgbot2.Update) (tgbotapi.Message
 
 	return logIfError(v.tg.Send(builder.Build()))
 }
+
+func (v *View) ErrorMessage(u *tgbot2.Update, text string) (tgbotapi.Message, error) {
+	c := &tgbotapi.CallbackConfig{
+		CallbackQueryID: u.CallbackQuery.ID,
+		Text:            text,
+		ShowAlert:       true,
+		URL:             "",
+		CacheTime:       1,
+	}
+	return logIfError(v.tg.Send(c))
+
+}

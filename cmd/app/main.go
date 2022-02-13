@@ -10,6 +10,7 @@ import (
 	"gotestbot/internal/bot/bot_handler"
 	"gotestbot/internal/bot/view"
 	"gotestbot/internal/dao"
+	"gotestbot/internal/service"
 	"gotestbot/sdk/tgbot"
 	"os"
 	"os/signal"
@@ -37,7 +38,7 @@ func main() {
 	}
 
 	viewSender := view.NewView(pgRepository, pgRepository, bot)
-	application := bot_handler.NewBotApp(viewSender, pgRepository)
+	application := bot_handler.NewBotApp(viewSender, service.NewProdService(pgRepository))
 
 	go func() {
 		err = bot.StartLongPolling(application.Handle)

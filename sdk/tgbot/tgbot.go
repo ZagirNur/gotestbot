@@ -19,6 +19,7 @@ type Bot struct {
 	*tgbotapi.BotAPI
 	handler  func(update *Update)
 	chatProv ChatProvider
+	BotSelf  tgbotapi.User
 }
 
 func NewBot(token string, chatProv ChatProvider) (*Bot, error) {
@@ -26,7 +27,8 @@ func NewBot(token string, chatProv ChatProvider) (*Bot, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create TgBot")
 	}
-	return &Bot{BotAPI: api, chatProv: chatProv}, nil
+	me, _ := api.GetMe()
+	return &Bot{BotAPI: api, chatProv: chatProv, BotSelf: me}, nil
 }
 
 func (b *Bot) StartLongPolling(handler func(update *Update)) error {
